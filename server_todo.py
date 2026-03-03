@@ -87,3 +87,5 @@ while True:
     print("Logging: " + result)
     client_socket.send(result.encode())
     client_socket.close()
+
+    ### here 
