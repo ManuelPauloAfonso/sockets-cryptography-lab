@@ -50,7 +50,6 @@ port = 8888
 # load key
 with open('key.fernet', 'rb') as key_file:
     key = key_file.read()
-    #key = key.strip()
     print("Loaded key: ", key)
 
 # check if todo_list.fernet exists
@@ -63,8 +62,13 @@ try:
             print("going to decrypt: ", c_item)
             plain_item = cipher.decrypt(c_item.encode()).decode()
             print("decrypted: ", plain_item)
+
             title, description, completed = plain_item.split(",")
             todo_list.add_item(title, description)
+
+            # FIX: restaurar estado completed
+            todo_list.items[-1].completed = (completed == "True")
+
 except FileNotFoundError:
     todo_list = TodoList()
 
@@ -79,28 +83,34 @@ print(todo_list.get_list_of_items())
 
 # Loop forever, waiting for client commands
 while True:
-    # Accept a connection
     print("Waiting for connection...")
     client_socket, address = server_socket.accept()
     print(f"Connected to {address}")
 
-    # receive operation and numbers and make calculation
     command = client_socket.recv(1024).decode()
     print(f"Received command: {command}")
+
     choice, data = command.split("-")
+
     if choice == "1":
         title, description = data.split(",")
         todo_list.add_item(title, description)
         result = "Todo added."
+
     elif choice == "2":
         result = todo_list.get_list_of_items()
+
     elif choice == "3":
         index = int(data)
         todo_list.complete_item(index)
         result = "Todo completed."
+
     else:
         result = "Invalid command."
+
     print("Logging: " + result)
+
     client_socket.send(result.encode())
     client_socket.close()
+
     todo_list.save_cipher(key)
